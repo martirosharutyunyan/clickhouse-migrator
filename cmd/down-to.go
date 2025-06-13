@@ -8,8 +8,6 @@ import (
 	"fmt"
 	"github.com/martirosharutyunyan/clickhouse-migrator/pkg/cfg"
 	"github.com/martirosharutyunyan/clickhouse-migrator/pkg/database"
-	"github.com/pressly/goose/v3"
-	"github.com/samber/lo"
 	"strconv"
 
 	"github.com/spf13/cobra"
@@ -21,6 +19,9 @@ var downToCmd = &cobra.Command{
 	Short: "down to specified version",
 	Long:  ``,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		if len(args) < 1 {
+			return fmt.Errorf("must specify version")
+		}
 		cfg.InitGoose(cmd)
 
 		conf, err := cfg.NewConfig(cmd)
@@ -43,11 +44,10 @@ var downToCmd = &cobra.Command{
 			return err
 		}
 
-		fmt.Println("status: ", lo.Map(res, func(item *goose.MigrationResult, index int) Version {
-			return Version{
-				Version: fmt.Sprintf("%d_%s", item.Source.Version, item.Source.Path),
-			}
-		}))
+		fmt.Println("Roll backed following migrations")
+		for _, row := range res {
+			fmt.Println(row.Source.Path)
+		}
 
 		return nil
 	},

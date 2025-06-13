@@ -8,8 +8,6 @@ import (
 	"fmt"
 	"github.com/martirosharutyunyan/clickhouse-migrator/pkg/cfg"
 	"github.com/martirosharutyunyan/clickhouse-migrator/pkg/database"
-	"github.com/pressly/goose/v3"
-	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 )
 
@@ -44,11 +42,10 @@ var resetCmd = &cobra.Command{
 			return err
 		}
 
-		fmt.Println("status: ", lo.Map(res, func(item *goose.MigrationResult, index int) Version {
-			return Version{
-				Version: fmt.Sprintf("%d_%s", item.Source.Version, item.Source.Path),
-			}
-		}))
+		fmt.Println("Reseted migrations")
+		for _, row := range res {
+			fmt.Println(row.Source.Path)
+		}
 
 		return nil
 	},

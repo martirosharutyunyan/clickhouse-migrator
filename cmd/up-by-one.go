@@ -33,7 +33,7 @@ var upByOneCmd = &cobra.Command{
 			return err
 		}
 
-		fmt.Println(res)
+		fmt.Printf("Applied migration: %s", res.Source.Path)
 
 		return nil
 	},

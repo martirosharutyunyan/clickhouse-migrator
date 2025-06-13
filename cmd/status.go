@@ -8,10 +8,8 @@ import (
 	"fmt"
 	"github.com/martirosharutyunyan/clickhouse-migrator/pkg/cfg"
 	"github.com/martirosharutyunyan/clickhouse-migrator/pkg/database"
-	"github.com/pressly/goose/v3"
-	"github.com/samber/lo"
-
 	"github.com/spf13/cobra"
+	"strings"
 )
 
 // statusCmd represents the status command
@@ -41,12 +39,10 @@ to quickly create a Cobra application.`,
 		if err != nil {
 			return err
 		}
-		fmt.Println("status: ", lo.Map(res, func(item *goose.MigrationStatus, index int) Version {
-			return Version{
-				Version:   fmt.Sprintf("%d_%s", item.Source.Version, item.Source.Path),
-				IsApplied: string(item.State),
-			}
-		}))
+
+		for _, row := range res {
+			fmt.Println(fmt.Sprintf("%s %v", row.Source.Path, strings.ToUpper(string(row.State))))
+		}
 
 		return nil
 	},

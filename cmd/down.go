@@ -35,7 +35,7 @@ var downCmd = &cobra.Command{
 			return err
 		}
 
-		fmt.Println(res)
+		fmt.Printf("Rolled back migration: %s", res.Source.Path)
 
 		return nil
 	},

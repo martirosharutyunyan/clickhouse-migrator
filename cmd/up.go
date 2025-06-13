@@ -33,7 +33,10 @@ var upCmd = &cobra.Command{
 			return err
 		}
 
-		fmt.Println(res)
+		fmt.Println("Applied following migrations")
+		for _, row := range res {
+			fmt.Println(row.Source.Path)
+		}
 
 		return nil
 	},
