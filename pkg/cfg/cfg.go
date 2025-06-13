@@ -9,11 +9,7 @@ import (
 )
 
 var (
-	GOOSEDRIVER       = envOr("GOOSE_DRIVER", "")
-	GOOSEDBSTRING     = envOr("GOOSE_DBSTRING", "")
 	GOOSEMIGRATIONDIR = envOr("GOOSE_MIGRATION_DIR", DefaultMigrationDir)
-	// https://no-color.org/
-	GOOSENOCOLOR = envOr("NO_COLOR", "false")
 )
 
 var (
