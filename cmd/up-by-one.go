@@ -8,14 +8,13 @@ import (
 	"fmt"
 	"github.com/martirosharutyunyan/clickhouse-migrator/pkg/cfg"
 	"github.com/martirosharutyunyan/clickhouse-migrator/pkg/database"
-
 	"github.com/spf13/cobra"
 )
 
 // upByOneCmd represents the upByOne command
 var upByOneCmd = &cobra.Command{
 	Use:   "up-by-one",
-	Short: "up migrations one by one ",
+	Short: "up migrations one by one",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cfg.InitGoose(cmd)
 

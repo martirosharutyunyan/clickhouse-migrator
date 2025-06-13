@@ -190,5 +190,10 @@ func NewStore(db *sql.DB, clusterName, dbName, tableName string) (database.Store
 	if tableName != "" {
 		store.tableName = tableName
 	}
+
+	if err := store.CreateVersionTable(context.Background(), db); err != nil {
+		return nil, err
+	}
+
 	return store, nil
 }
