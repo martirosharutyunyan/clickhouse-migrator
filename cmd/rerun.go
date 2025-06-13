@@ -1,5 +1,5 @@
 /*
-Copyright © 2025 Martiros <martiros.harutunyan@gmail.com>
+Copyright © 2025 NAME HERE <EMAIL ADDRESS>
 
 */
 package cmd
@@ -8,14 +8,15 @@ import (
 	"fmt"
 	"github.com/martirosharutyunyan/clickhouse-migrator/pkg/cfg"
 	"github.com/martirosharutyunyan/clickhouse-migrator/pkg/database"
+
 	"github.com/spf13/cobra"
 )
 
-// resetCmd represents the reset command
-var resetCmd = &cobra.Command{
-	Use:   "reset",
-	Short: "reset all migrations",
-	Long:  ``,
+// rerunCmd represents the reshard command
+var rerunCmd = &cobra.Command{
+	Use:   "rerun",
+	Short: "it resets and runs migrations",
+	Long:  `Can be used to reshard migrations table in case of adding or deleting nodes`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cfg.InitGoose(cmd)
 
@@ -29,16 +30,12 @@ var resetCmd = &cobra.Command{
 			return err
 		}
 
-		res, err := database.Reset(cmd.Context(), provider)
+		res, err := database.Reshard(cmd.Context(), provider)
 		if err != nil {
 			return err
 		}
 
-		if res == nil {
-			return nil
-		}
-
-		fmt.Println("Reseted migrations")
+		fmt.Println("Rerun following migrations")
 		for _, row := range res {
 			fmt.Println(row.Source.Path)
 		}
@@ -48,15 +45,15 @@ var resetCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(resetCmd)
+	rootCmd.AddCommand(rerunCmd)
 
 	// Here you will define your flags and configuration settings.
 
 	// Cobra supports Persistent Flags which will work for this command
 	// and all subcommands, e.g.:
-	// resetCmd.PersistentFlags().String("foo", "", "A help for foo")
+	// reshardCmd.PersistentFlags().String("foo", "", "A help for foo")
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	// resetCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	// reshardCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
