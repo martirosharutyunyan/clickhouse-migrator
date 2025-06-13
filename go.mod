@@ -6,7 +6,6 @@ require (
 	github.com/ClickHouse/clickhouse-go/v2 v2.34.0
 	github.com/pkg/errors v0.9.1
 	github.com/pressly/goose/v3 v3.24.3
-	github.com/samber/lo v1.51.0
 	github.com/spf13/cobra v1.9.1
 )
 
@@ -30,6 +29,5 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/sync v0.14.0 // indirect
 	golang.org/x/sys v0.33.0 // indirect
-	golang.org/x/text v0.25.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
