@@ -25,12 +25,12 @@ var rerunCmd = &cobra.Command{
 			return err
 		}
 
-		provider, err := database.NewProvider(conf)
+		provider, err := database.NewProvider(conf, cfg.OptionsFromCmd(cmd)...)
 		if err != nil {
 			return err
 		}
 
-		res, err := database.Reshard(cmd.Context(), provider)
+		res, err := database.Rerun(cmd.Context(), provider)
 		if err != nil {
 			return err
 		}

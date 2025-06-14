@@ -29,7 +29,7 @@ var upToCmd = &cobra.Command{
 			return err
 		}
 
-		provider, err := database.NewProvider(conf)
+		provider, err := database.NewProvider(conf, cfg.OptionsFromCmd(cmd)...)
 		if err != nil {
 			return err
 		}

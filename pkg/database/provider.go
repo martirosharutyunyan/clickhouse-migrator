@@ -6,7 +6,7 @@ import (
 	"os"
 )
 
-func NewProvider(conf *cfg.Config) (*goose.Provider, error) {
+func NewProvider(conf *cfg.Config, opts ...goose.ProviderOption) (*goose.Provider, error) {
 	store, err := NewStore(conf.DB, conf.Cluster, conf.DBName, conf.TableName)
 	if err != nil {
 		return nil, err
@@ -14,5 +14,7 @@ func NewProvider(conf *cfg.Config) (*goose.Provider, error) {
 
 	migrationsFs := os.DirFS(conf.Dir)
 
-	return goose.NewProvider("", conf.DB, migrationsFs, goose.WithStore(store))
+	opts = append(opts, goose.WithStore(store))
+
+	return goose.NewProvider("", conf.DB, migrationsFs, opts...)
 }

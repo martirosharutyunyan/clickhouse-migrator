@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/martirosharutyunyan/clickhouse-migrator/pkg/types"
 	"github.com/pkg/errors"
 	"github.com/pressly/goose/v3/database" // Import the goose database package
 )
@@ -101,12 +102,74 @@ func (s *ShardedClickHouseStore) Insert(ctx context.Context, db database.DBTxCon
 	return nil
 }
 
+func (s *ShardedClickHouseStore) BulkInsert(ctx context.Context, versions []int64) error {
+	query := fmt.Sprintf("INSERT INTO %s.%s (version, is_applied, t) SETTINGS insert_distributed_sync = 1 VALUES ", s.dbName, s.tableName)
+
+	var versionsAny []any
+	for i, version := range versions {
+		if i == len(versions)-1 {
+			query += "(?, 1, now())"
+			versionsAny = append(versionsAny, version)
+			continue
+		}
+		query += "(?, 1, now()), "
+		versionsAny = append(versionsAny, version)
+	}
+
+	_, err := s.db.ExecContext(ctx, query, versionsAny...)
+	if err != nil {
+		return fmt.Errorf("failed to bulk insert version %d: %w", versions, err)
+	}
+	return nil
+}
+
+func (s *ShardedClickHouseStore) GetMigrationsWithShards(ctx context.Context) ([]types.Migration, error) {
+	// Important:  Order by version DESC.
+	query := fmt.Sprintf("SELECT version, is_applied, shardNum() as shard_num FROM %s.%s ORDER BY version DESC SETTINGS select_sequential_consistency = 1", s.dbName, s.tableName)
+	rows, err := s.db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list migrations: %w", err)
+	}
+	defer rows.Close()
+
+	var migrations []types.Migration
+	for rows.Next() {
+		var (
+			version   int64
+			isApplied uint8 // ClickHouse uses UInt8
+			shardNum  uint8 // ClickHouse uses UInt8
+		)
+		if err := rows.Scan(&version, &isApplied, &shardNum); err != nil {
+			return nil, fmt.Errorf("failed to scan row: %w", err)
+		}
+		migrations = append(migrations, types.Migration{
+			Version:     version,
+			ShardNumber: int(shardNum),
+			IsApplied:   isApplied == 1,
+		})
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error during rows iteration: %w", err)
+	}
+	return migrations, nil
+}
+
 // Delete deletes a version id from the version table.
 func (s *ShardedClickHouseStore) Delete(ctx context.Context, db database.DBTxConn, version int64) error {
 	query := fmt.Sprintf("ALTER TABLE %s.%s_local ON CLUSTER '%s' DELETE WHERE version = ?", s.dbName, s.tableName, s.cluster)
 	_, err := db.ExecContext(ctx, query, version)
 	if err != nil {
 		return fmt.Errorf("failed to delete version %d: %w", version, err)
+	}
+	return nil
+}
+
+func (s *ShardedClickHouseStore) Truncate(ctx context.Context) error {
+	query := fmt.Sprintf("TRUNCATE %s.%s_local ON CLUSTER '%s' SETTINGS alter_sync=2;", s.dbName, s.tableName, s.cluster)
+	_, err := s.db.ExecContext(ctx, query)
+	if err != nil {
+		return fmt.Errorf("failed to truncate %s: %w", s.tableName, err)
 	}
 	return nil
 }
@@ -182,7 +245,7 @@ func (s *ShardedClickHouseStore) ListMigrations(ctx context.Context, db database
 //
 // The dialect parameter is a string that specifies the database dialect.  If an empty string is
 // provided, it attempts to auto-detect the dialect from the database connection.
-func NewStore(db *sql.DB, clusterName, dbName, tableName string) (database.Store, error) {
+func NewStore(db *sql.DB, clusterName, dbName, tableName string) (*ShardedClickHouseStore, error) {
 	if clusterName == "" || dbName == "" {
 		return nil, fmt.Errorf("cluster name and db name must be provided")
 	}

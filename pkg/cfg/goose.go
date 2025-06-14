@@ -12,5 +12,16 @@ func InitGoose(cmd *cobra.Command) {
 	if cmd.Flags().Lookup("s").Changed {
 		goose.SetSequential(true)
 	}
-	goose.SetTableName(cmd.Flags().Lookup("table").Value.String())
+}
+
+func OptionsFromCmd(cmd *cobra.Command) []goose.ProviderOption {
+	var opts []goose.ProviderOption
+	if cmd.Flags().Lookup("v").Changed {
+		opts = append(opts, goose.WithVerbose(true))
+	}
+	if cmd.Flags().Lookup("s").Changed {
+		opts = append(opts, goose.WithAllowOutofOrder(true))
+	}
+
+	return opts
 }
