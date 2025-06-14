@@ -18,17 +18,25 @@ type ShardedClickHouseStore struct {
 	cluster   string // ClickHouse cluster name.  Important for Distributed tables.
 	db        *sql.DB
 	dbName    string
+	quorum    int
 }
 
 // NewShardedClickHouseStore creates a new ShardedClickHouseStore.
 // cluster: The name of the ClickHouse cluster.
-func NewShardedClickHouseStore(db *sql.DB, cluster, dbName string) *ShardedClickHouseStore {
-	return &ShardedClickHouseStore{
+func NewShardedClickHouseStore(db *sql.DB, cluster, dbName string, opts ...Option) *ShardedClickHouseStore {
+	store := &ShardedClickHouseStore{
 		tableName: "goose_db_version", // Default table name, same as standard goose
 		cluster:   cluster,
 		db:        db,
 		dbName:    dbName,
+		quorum:    2,
 	}
+
+	for _, opt := range opts {
+		opt(store)
+	}
+
+	return store
 }
 
 // Tablename returns the name of the version table.
@@ -103,7 +111,13 @@ func (s *ShardedClickHouseStore) Insert(ctx context.Context, db database.DBTxCon
 }
 
 func (s *ShardedClickHouseStore) BulkInsert(ctx context.Context, versions []int64) error {
-	query := fmt.Sprintf("INSERT INTO %s.%s (version, is_applied, t) SETTINGS insert_distributed_sync = 1 VALUES ", s.dbName, s.tableName)
+	query := fmt.Sprintf(`INSERT INTO %s.%s (version, is_applied, t) 
+		SETTINGS 
+			insert_distributed_sync = 1,
+			insert_quorum = %d, 
+    		insert_quorum_parallel = 0 
+ 		VALUES `, s.dbName, s.tableName, s.quorum,
+	)
 
 	var versionsAny []any
 	for i, version := range versions {
@@ -245,11 +259,11 @@ func (s *ShardedClickHouseStore) ListMigrations(ctx context.Context, db database
 //
 // The dialect parameter is a string that specifies the database dialect.  If an empty string is
 // provided, it attempts to auto-detect the dialect from the database connection.
-func NewStore(db *sql.DB, clusterName, dbName, tableName string) (*ShardedClickHouseStore, error) {
+func NewStore(db *sql.DB, clusterName, dbName, tableName string, opts ...Option) (*ShardedClickHouseStore, error) {
 	if clusterName == "" || dbName == "" {
 		return nil, fmt.Errorf("cluster name and db name must be provided")
 	}
-	store := NewShardedClickHouseStore(db, clusterName, dbName)
+	store := NewShardedClickHouseStore(db, clusterName, dbName, opts...)
 	if tableName != "" {
 		store.tableName = tableName
 	}

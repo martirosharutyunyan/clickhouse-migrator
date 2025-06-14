@@ -9,11 +9,15 @@ import (
 	"slices"
 	"strconv"
 	"strings"
-	"time"
 )
 
-func Reshard(ctx context.Context, conf *cfg.Config, provider *goose.Provider) ([]types.Migration, error) {
-	store, err := NewStore(conf.DB, conf.Cluster, conf.DBName, conf.TableName)
+func Reshard(
+	ctx context.Context,
+	conf *cfg.Config,
+	provider *goose.Provider,
+	quorum int,
+) ([]types.Migration, error) {
+	store, err := NewStore(conf.DB, conf.Cluster, conf.DBName, conf.TableName, WithQuorum(quorum))
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +58,7 @@ func Reshard(ctx context.Context, conf *cfg.Config, provider *goose.Provider) ([
 		return nil, err
 	}
 
-	time.Sleep(time.Second)
+	//time.Sleep(time.Second)
 
 	reshardedMigrations, err := store.GetMigrationsWithShards(ctx)
 	if err != nil {
