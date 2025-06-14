@@ -17,7 +17,15 @@ var rootCmd = &cobra.Command{
 	Use:   "clickhouse-migrator",
 	Short: "clickhouse-migrator for distributed cluster",
 	Long: `Clickhouse distributed migrator for distributing goose_db_version_table in cluster.
-Redistributing it in case of adding or deleting nodes`,
+Redistributing it in case of adding or deleting nodes
+Here are examples:
+
+CH_CLUSTER=hitoku_cluster CH_DB=default clickhouse-migrator --dsn "tcp://localhost:9000/default?username=test_user&password=test" -
+-db default --cluster hitoku_cluster --dir ./migrations up
+CH_CLUSTER=hitoku_cluster CH_DB=default clickhouse-migrator --dsn "tcp://localhost:9000/default?username=test_user&password=test" -
+-db default --cluster hitoku_cluster --dir ./migrations reshard
+
+`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	Run: func(cmd *cobra.Command, args []string) {

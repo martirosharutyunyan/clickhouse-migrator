@@ -1,0 +1,157 @@
+services:
+  clickhouse-01-01:
+    image: "clickhouse/clickhouse-server:${CHVER:-latest}"
+    user: "101:101"
+    container_name: clickhouse-01-01
+    environment:
+      CLICKHOUSE_DB: $CH_DB
+      CLICKHOUSE_USER: $CH_USER
+      CLICKHOUSE_PASSWORD: $CH_PASSWORD
+    volumes:
+      - ./ch-cluster-config/node-01-01/config.xml:/etc/clickhouse-server/config.d/config.xml
+      - clickhouse-01-01-data:/var/lib/clickhouse
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    depends_on:
+      - clickhouse-keeper-01
+      - clickhouse-keeper-02
+      - clickhouse-keeper-03
+    networks:
+      - test-network
+    healthcheck:
+      test: [ "CMD", "clickhouse-client", "--password=test", "--user=test_user", "--query", "SELECT 1" ]
+      interval: 5s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  clickhouse-01-02:
+    image: "clickhouse/clickhouse-server:${CHVER:-latest}"
+    user: "101:101"
+    container_name: clickhouse-01-02
+    environment:
+      CLICKHOUSE_DB: $CH_DB
+      CLICKHOUSE_USER: $CH_USER
+      CLICKHOUSE_PASSWORD: $CH_PASSWORD
+    volumes:
+      - ./ch-cluster-config/node-01-02/config.xml:/etc/clickhouse-server/config.d/config.xml
+      - clickhouse-01-02-data:/var/lib/clickhouse
+    ports:
+      - "8124:8123"
+      - "9001:9000"
+    depends_on:
+      - clickhouse-keeper-01
+      - clickhouse-keeper-02
+      - clickhouse-keeper-03
+    networks:
+      - test-network
+    healthcheck:
+      test: [ "CMD", "clickhouse-client", "--password=test", "--user=test_user", "--query", "SELECT 1" ]
+      interval: 5s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  clickhouse-02-01:
+    image: "clickhouse/clickhouse-server:${CHVER:-latest}"
+    user: "101:101"
+    container_name: clickhouse-02-01
+    environment:
+      CLICKHOUSE_DB: $CH_DB
+      CLICKHOUSE_USER: $CH_USER
+      CLICKHOUSE_PASSWORD: $CH_PASSWORD
+    volumes:
+      - ./ch-cluster-config/node-02-01/config.xml:/etc/clickhouse-server/config.d/config.xml
+      - clickhouse-02-01-data:/var/lib/clickhouse
+    ports:
+      - "8125:8123"
+      - "9002:9000"
+    depends_on:
+      - clickhouse-keeper-01
+      - clickhouse-keeper-02
+      - clickhouse-keeper-03
+    networks:
+      - test-network
+    healthcheck:
+      test: [ "CMD", "clickhouse-client", "--password=test", "--user=test_user", "--query", "SELECT 1" ]
+      interval: 5s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  clickhouse-02-02:
+    image: "clickhouse/clickhouse-server:${CHVER:-latest}"
+    user: "101:101"
+    container_name: clickhouse-02-02
+    environment:
+      CLICKHOUSE_DB: $CH_DB
+      CLICKHOUSE_USER: $CH_USER
+      CLICKHOUSE_PASSWORD: $CH_PASSWORD
+    volumes:
+      - ./ch-cluster-config/node-02-02/config.xml:/etc/clickhouse-server/config.d/config.xml
+      - clickhouse-02-02-data:/var/lib/clickhouse
+    ports:
+      - "8126:8123"
+      - "9003:9000"
+    depends_on:
+      - clickhouse-keeper-01
+      - clickhouse-keeper-02
+      - clickhouse-keeper-03
+    networks:
+      - test-network
+    healthcheck:
+      test: [ "CMD", "clickhouse-client", "--password=test", "--user=test_user", "--query", "SELECT 1" ]
+      interval: 5s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+
+
+  clickhouse-keeper-01:
+    image: "clickhouse/clickhouse-keeper:${CHKVER:-latest-alpine}"
+    user: "101:101"
+    container_name: clickhouse-keeper-01
+    volumes:
+      - ./ch-cluster-config/keeper/config-01.xml:/etc/clickhouse-keeper/keeper_config.xml
+      - clickhouse-keeper-01-data:/var/lib/clickhouse-keeper
+    ports:
+      - "9181:9181"
+    networks:
+      - test-network
+  clickhouse-keeper-02:
+    image: "clickhouse/clickhouse-keeper:${CHKVER:-latest-alpine}"
+    user: "101:101"
+    container_name: clickhouse-keeper-02
+    volumes:
+      - ./ch-cluster-config/keeper/config-02.xml:/etc/clickhouse-keeper/keeper_config.xml
+      - clickhouse-keeper-02-data:/var/lib/clickhouse-keeper
+    ports:
+      - "9182:9181"
+    networks:
+      - test-network
+  clickhouse-keeper-03:
+    image: "clickhouse/clickhouse-keeper:${CHKVER:-latest-alpine}"
+    user: "101:101"
+    container_name: clickhouse-keeper-03
+    volumes:
+      - ./ch-cluster-config/keeper/config-03.xml:/etc/clickhouse-keeper/keeper_config.xml
+      - clickhouse-keeper-03-data:/var/lib/clickhouse-keeper
+    ports:
+      - "9183:9181"
+    networks:
+      - test-network
+
+volumes:
+  clickhouse-01-01-data:
+  clickhouse-01-02-data:
+  clickhouse-02-01-data:
+  clickhouse-02-02-data:
+  clickhouse-keeper-01-data:
+  clickhouse-keeper-02-data:
+  clickhouse-keeper-03-data:
+
+networks:
+  test-network:
+    driver: bridge
