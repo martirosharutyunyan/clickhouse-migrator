@@ -8,8 +8,6 @@ import (
 	"fmt"
 	"github.com/martirosharutyunyan/clickhouse-migrator/pkg/cfg"
 	"github.com/martirosharutyunyan/clickhouse-migrator/pkg/database"
-	"strconv"
-
 	"github.com/spf13/cobra"
 )
 
@@ -30,13 +28,7 @@ var reshardCmd = &cobra.Command{
 			return err
 		}
 
-		quorumStr := cmd.Flag("quorum").Value.String()
-		quorum, err := strconv.Atoi(quorumStr)
-		if err != nil {
-			return err
-		}
-
-		res, err := database.Reshard(cmd.Context(), conf, provider, quorum)
+		res, err := database.Reshard(cmd.Context(), conf, provider)
 		if err != nil {
 			return err
 		}
@@ -62,5 +54,4 @@ func init() {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	// reshardCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-	reshardCmd.Flags().Int("quorum", 2, "count of replicas")
 }

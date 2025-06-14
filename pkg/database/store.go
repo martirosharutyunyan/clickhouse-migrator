@@ -18,7 +18,6 @@ type ShardedClickHouseStore struct {
 	cluster   string // ClickHouse cluster name.  Important for Distributed tables.
 	db        *sql.DB
 	dbName    string
-	quorum    int
 }
 
 // NewShardedClickHouseStore creates a new ShardedClickHouseStore.
@@ -29,7 +28,6 @@ func NewShardedClickHouseStore(db *sql.DB, cluster, dbName string, opts ...Optio
 		cluster:   cluster,
 		db:        db,
 		dbName:    dbName,
-		quorum:    2,
 	}
 
 	for _, opt := range opts {
@@ -110,13 +108,13 @@ func (s *ShardedClickHouseStore) Insert(ctx context.Context, db database.DBTxCon
 	return nil
 }
 
-func (s *ShardedClickHouseStore) BulkInsert(ctx context.Context, versions []int64) error {
+func (s *ShardedClickHouseStore) BulkInsert(ctx context.Context, versions []int64, quorum int64) error {
 	query := fmt.Sprintf(`INSERT INTO %s.%s (version, is_applied, t) 
 		SETTINGS 
 			insert_distributed_sync = 1,
 			insert_quorum = %d, 
     		insert_quorum_parallel = 0 
- 		VALUES `, s.dbName, s.tableName, s.quorum,
+ 		VALUES `, s.dbName, s.tableName, quorum,
 	)
 
 	var versionsAny []any
@@ -167,6 +165,24 @@ func (s *ShardedClickHouseStore) GetMigrationsWithShards(ctx context.Context) ([
 		return nil, fmt.Errorf("error during rows iteration: %w", err)
 	}
 	return migrations, nil
+}
+
+func (s *ShardedClickHouseStore) GetReplicaCount(ctx context.Context) (int64, error) {
+	query := fmt.Sprintf(`SELECT
+		count() AS replica_count
+		FROM system.replicas
+		WHERE database = '%s' AND table = '%s_local';`,
+		s.dbName,
+		s.tableName,
+	)
+
+	row := s.db.QueryRowContext(ctx, query)
+	var replicaCount int64
+	if err := row.Scan(&replicaCount); err != nil {
+		return 0, fmt.Errorf("failed to get replica count: %w", err)
+	}
+
+	return replicaCount, nil
 }
 
 // Delete deletes a version id from the version table.

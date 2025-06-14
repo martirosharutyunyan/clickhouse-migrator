@@ -15,9 +15,8 @@ func Reshard(
 	ctx context.Context,
 	conf *cfg.Config,
 	provider *goose.Provider,
-	quorum int,
 ) ([]types.Migration, error) {
-	store, err := NewStore(conf.DB, conf.Cluster, conf.DBName, conf.TableName, WithQuorum(quorum))
+	store, err := NewStore(conf.DB, conf.Cluster, conf.DBName, conf.TableName)
 	if err != nil {
 		return nil, err
 	}
@@ -53,12 +52,16 @@ func Reshard(
 		}
 	}
 
-	err = store.BulkInsert(ctx, insertedMigrations)
+	replicaCount, err := store.GetReplicaCount(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	//time.Sleep(time.Second)
+	quorum := replicaCount + 1
+	err = store.BulkInsert(ctx, insertedMigrations, quorum)
+	if err != nil {
+		return nil, err
+	}
 
 	reshardedMigrations, err := store.GetMigrationsWithShards(ctx)
 	if err != nil {
